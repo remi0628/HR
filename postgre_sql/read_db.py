@@ -2,6 +2,10 @@ import os
 import psycopg2
 from sqlalchemy import *
 from sqlalchemy import create_engine
+import sys
+sys.path.append('../')
+import settings
+SAVE_FILE_PATH = settings.SAVE_FILE_PATH
 
 # DBへ接続
 def engine_generate():
@@ -41,12 +45,15 @@ def test_serect_race_id(engine):
 
 # レース毎にファイル作成, 馬のデータを入れる
 def create_data_race_id(engine):
+    race_list = []
     q = ('select * from races where id=4971')
     q_display(q)
     result = engine.execute(q)
     for row in result:
-        print(row)
-
+        race_list.append(row)
+    file_name = '{}-{}-{}-{}'.format( str(race_list[0][5]), str(race_list[0][4]).replace('m', ''), str(race_list[0][2]), str(race_list[0][12]).replace('R', '') )
+    print(file_name)
+    os.makedirs(SAVE_FILE_PATH + file_name, exist_ok=True)
 
 
 def main():
