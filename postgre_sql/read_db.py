@@ -100,7 +100,11 @@ def horse_id_acquisition(engine, race_id):
 
 def create_past_race_data(engine, horse_id_list):
     for horse_id in horse_id_list:
-
+        q = (
+            select([
+                literal_column('')
+            ])
+        )
 
 def main():
     engine = engine_generate()
