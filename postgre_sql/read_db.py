@@ -99,17 +99,25 @@ def horse_id_acquisition(engine, race_id):
     return horse_id_list
 
 def create_past_race_data(engine, horse_id_list):
-    for horse_id in horse_id_list:
-        q = (
-            select([
-                literal_column('')
-            ])
+    #for horse_id in horse_id_list:
+    q = (
+        select([
+            literal_column('*'),
+        ]).select_from(
+            table('races').alias('r')
+            .join(table('race_horses').alias('rh'), text('r.id = rh.race_id') )
         )
+            .where(literal_column('rh.horse_id') == str(horse_id_list))
+    )
+    result = engine.execute(q)
+    for row in result:
+        print(row)
 
 def main():
     engine = engine_generate()
     race_id = 4971
-    create_data_race_id(engine, race_id)
+    #create_data_race_id(engine, race_id)
+    create_past_race_data(engine, 7118)
 
 
 if __name__ == '__main__':
