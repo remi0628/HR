@@ -25,25 +25,8 @@ def q_display(q, id=None):
         print('{}：{}'.format(name, id))
     print('-------------------------------------------------')
 
-
-
-# q_test
-def test_serect_race_id(engine):
-    race_id_num = 1
-    q = (
-        select([
-            literal_column('id'),
-            literal_column('title'),
-        ])
-            .select_from(table('races'))
-            .where(literal_column('id') >= race_id_num)
-        )
-
-    q_display(q)
-    result = engine.execute(q)
-    for row in result:
-        print(row)
-
+def conf_exist_database(race_id):
+    q_select = 'select count(1) from races where id={}'.format(race_id)
 
 # 渡されたレース毎にファイル作成, 馬のデータを入れる
 def create_data_race_id(engine, race_id):
