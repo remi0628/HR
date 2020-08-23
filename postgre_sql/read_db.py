@@ -1,4 +1,5 @@
 import os
+import time
 import itertools
 import psycopg2
 import pandas as pd
@@ -9,6 +10,11 @@ import sys
 sys.path.append('../')
 import settings
 SAVE_FILE_PATH = settings.SAVE_FILE_PATH
+
+# 空のrace_id数, データ引き抜き最中にエラーを起こした数, 正常に取得できた数
+global no_data_num, error_num, perfect_data_num
+no_data_num, error_num, perfect_data_num = 0, 0, 0
+
 
 # DB接続
 def engine_generate():
@@ -25,6 +31,13 @@ def q_display(q, id=None):
         print('{}：{}'.format(name, id))
     print('-------------------------------------------------')
 
+# 最後に動作チェック
+def operation_check():
+    print('-------------------------------------------------')
+    print('正常に取得したレース数：{}'.format(str(perfect_data_num)))
+    print('空の[race_id]数：{}　|　エラー数：{}'.format(str(no_data_num - 1), str(error_num)))
+    print('-------------------------------------------------')
+
 # idが存在するか
 def conf_exist_database(engine, race_id):
     q_select = 'select count(1) from races where id={}'.format(race_id)
@@ -33,27 +46,46 @@ def conf_exist_database(engine, race_id):
     (count,) = result.fetchone()
     return count
 
+# データベースにある最後のレースid取得
+def last_record(engine):
+        q_select = 'select id from races order by id desc limit 1'
+        q = (q_select)
+        (id, ) = engine.execute(q)
+        print('-------------------------------------------------')
+        print('DB最後のレースID：{}'.format(id[0]))
+        print('-------------------------------------------------')
+        time.sleep(3) # 画面確認の為の待機時間
+        return id[0]
+
+
 
 
 # 渡されたレース毎にファイル作成, 馬のデータを入れる
 def create_data_race_id(engine, race_id):
+    global no_data_num, error_num, perfect_data_num
     flag = conf_exist_database(engine, race_id) # idチェック
     if flag == 1:
-        race_list = []
-        q_select = 'select * from races where id={}'.format(race_id)
-        q = (q_select)
-        # q_display(q)
-        result = engine.execute(q)
-        for row in result:
-            race_list.append(row)
-        rank1 = race_horse_rank1(engine, race_id) # 1位の馬番取得
-        # レース日-R-距離-土状態-1位馬番
-        file_name = '{}-{}-{}-{}-{}'.format( str(race_list[0][5]), str(race_list[0][12]).replace('R', '').zfill(2), str(race_list[0][4]).replace('m', ''), str(race_list[0][2]), str(rank1) )
-        print(file_name)
-        save_file = SAVE_FILE_PATH + file_name
-        horse_id_list = horse_id_acquisition(engine, race_id)
-        create_past_race_data(engine, race_id, horse_id_list, save_file)
+        try:
+            race_list = []
+            q_select = 'select * from races where id={}'.format(race_id)
+            q = (q_select)
+            # q_display(q)
+            result = engine.execute(q)
+            for row in result:
+                race_list.append(row)
+            rank1 = race_horse_rank1(engine, race_id) # 1位の馬番取得
+            # レース日-R-距離-土状態-1位馬番
+            file_name = '{}-{}-{}-{}-{}'.format( str(race_list[0][5]), str(race_list[0][12]).replace('R', '').zfill(2), str(race_list[0][4]).replace('m', ''), str(race_list[0][2]), str(rank1) )
+            print('|{:5}|{} | R：{:2} | レース距離：{:4} | 1位馬番：{:2} | 土の状態：{:2} '.format(str(race_id), str(race_list[0][5]), str(race_list[0][12]).replace('R', ''), str(race_list[0][4]).replace('m', ''), str(rank1), str(race_list[0][2]) ) )
+            save_file = SAVE_FILE_PATH + file_name
+            horse_id_list = horse_id_acquisition(engine, race_id)
+            create_past_race_data(engine, race_id, horse_id_list, save_file)
+            perfect_data_num += 1
+        except:
+            error_num += 1
     else:
+        no_data_num += 1
+        print(race_id)
         pass
 
 # レースidを渡すと一着の馬番を返す
@@ -73,7 +105,6 @@ def race_horse_rank1(engine, race_id):
     result = engine.execute(q)
     for row in result:
         rank_list.append(row)
-    print(rank_list)
     rank1 = 1 #rank_list[0][0]  # 1位の馬番
     return rank1
 
@@ -130,7 +161,7 @@ def create_past_race_data(engine, race_id, horse_id_list, save_file=None):
             )
                 .where(literal_column('rh.horse_id') == str(horse_id))
         )
-        q_display(q, horse_id)
+        # q_display(q, horse_id) # q確認
         df = pd.read_sql_query(q, engine)
         # リネーム
         df.rename(columns={'r.date':'年月日', 'r.res_finished':'レース終了済み', 'r.place':'競馬場', 'r.course_type':'コース種別',
@@ -139,7 +170,7 @@ def create_past_race_data(engine, race_id, horse_id_list, save_file=None):
                                         'rh.res_corner_indexes':'コーナー通過順', 'rh.weight':'体重', 'rh.handicap':'斤量',
                                         'rh.jockey':'騎手', 'h.trainer':'調教師'}, inplace=True)
         df.sort_values(by=['年月日'], inplace=True, ascending=False)
-        print(df.head(5))
+        # print(df.head(5)) # data確認
         # ファイル名構成
         q = (
             select([
@@ -157,21 +188,35 @@ def create_past_race_data(engine, race_id, horse_id_list, save_file=None):
         for row in result:
             n = row
         name = '{}{}{}年{}月{}日'.format(n[0], n[1], n[2].year, n[2].month, n[2].day)
-        print(name)
+        # ファイル生成
         if save_file:
             os.makedirs(save_file, exist_ok=True)
             with open(save_file + '/' + name + ".csv", mode="w", encoding="cp932", newline="", errors="ignore") as f:
                 df.to_csv(f)
 
 
-# カラム生成　死んだ
+# カラム生成　死んでる
 def create_clomn(n):
     return [('literal_column(\'{}\')'.format(str(x)) ) for i, x in enumerate(n) ]
 
-def main():
+
+# データベースにあるレース全てを取得
+def create_csv_data():
     engine = engine_generate()
-    race_id = 22420
-    create_data_race_id(engine, race_id)
+    max_race_id = last_record(engine) # 最大race_id
+    #max_race_id = 10
+    for race_id in range(int(max_race_id)+1):
+        create_data_race_id(engine, race_id)
+    operation_check()
+
+
+
+def main():
+    #engine = engine_generate()
+    #race_id = 27465
+    #create_data_race_id(engine, race_id)
+    create_csv_data()
+
 
 
 if __name__ == '__main__':
