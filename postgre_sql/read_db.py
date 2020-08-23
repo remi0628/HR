@@ -25,25 +25,36 @@ def q_display(q, id=None):
         print('{}：{}'.format(name, id))
     print('-------------------------------------------------')
 
-def conf_exist_database(race_id):
+# idが存在するか
+def conf_exist_database(engine, race_id):
     q_select = 'select count(1) from races where id={}'.format(race_id)
+    q = (q_select)
+    result = engine.execute(q)
+    (count,) = result.fetchone()
+    return count
+
+
 
 # 渡されたレース毎にファイル作成, 馬のデータを入れる
 def create_data_race_id(engine, race_id):
-    race_list = []
-    q_select = 'select * from races where id={}'.format(race_id)
-    q = (q_select)
-    # q_display(q)
-    result = engine.execute(q)
-    for row in result:
-        race_list.append(row)
-    rank1 = race_horse_rank1(engine, race_id) # 1位の馬番取得
-    # レース日-R-距離-土状態-1位馬番
-    file_name = '{}-{}-{}-{}-{}'.format( str(race_list[0][5]), str(race_list[0][12]).replace('R', '').zfill(2), str(race_list[0][4]).replace('m', ''), str(race_list[0][2]), str(rank1) )
-    print(file_name)
-    save_file = SAVE_FILE_PATH + file_name
-    horse_id_list = horse_id_acquisition(engine, race_id)
-    create_past_race_data(engine, race_id, horse_id_list, save_file)
+    flag = conf_exist_database(engine, race_id) # idチェック
+    if flag == 1:
+        race_list = []
+        q_select = 'select * from races where id={}'.format(race_id)
+        q = (q_select)
+        # q_display(q)
+        result = engine.execute(q)
+        for row in result:
+            race_list.append(row)
+        rank1 = race_horse_rank1(engine, race_id) # 1位の馬番取得
+        # レース日-R-距離-土状態-1位馬番
+        file_name = '{}-{}-{}-{}-{}'.format( str(race_list[0][5]), str(race_list[0][12]).replace('R', '').zfill(2), str(race_list[0][4]).replace('m', ''), str(race_list[0][2]), str(rank1) )
+        print(file_name)
+        save_file = SAVE_FILE_PATH + file_name
+        horse_id_list = horse_id_acquisition(engine, race_id)
+        create_past_race_data(engine, race_id, horse_id_list, save_file)
+    else:
+        pass
 
 # レースidを渡すと一着の馬番を返す
 def race_horse_rank1(engine, race_id):
@@ -161,7 +172,6 @@ def main():
     engine = engine_generate()
     race_id = 22420
     create_data_race_id(engine, race_id)
-    #create_past_race_data(engine, 7118)
 
 
 if __name__ == '__main__':
