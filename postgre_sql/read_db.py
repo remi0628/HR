@@ -204,10 +204,12 @@ def create_clomn(n):
 def create_csv_data():
     engine = engine_generate()
     max_race_id = last_record(engine) # 最大race_id
-    #max_race_id = 10
+    max_race_id = 10
+    now = time.time()
     for race_id in range(int(max_race_id)+1):
         create_data_race_id(engine, race_id)
     operation_check()
+    print("データ取得処理時間 ：{:.2f}秒".format(time.time() - now) )
 
 
 
