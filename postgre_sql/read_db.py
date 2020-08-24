@@ -105,8 +105,7 @@ def race_horse_rank1(engine, race_id):
     result = engine.execute(q)
     for row in result:
         rank_list.append(row)
-    rank1 = 1 #rank_list[0][0]  # 1位の馬番
-    return rank1
+    return rank_list[0][0] #rank_list[0][0]  # 1位の馬番
 
 # レースidから馬のidリスト取得
 def horse_id_acquisition(engine, race_id):
