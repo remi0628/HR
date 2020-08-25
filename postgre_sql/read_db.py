@@ -11,6 +11,8 @@ sys.path.append('../')
 import settings
 SAVE_FILE_PATH = settings.SAVE_FILE_PATH
 
+log_path = '../log/'
+
 # 空のrace_id数, データ引き抜き最中にエラーを起こした数, 正常に取得できた数
 global no_data_num, error_num, perfect_data_num
 no_data_num, error_num, perfect_data_num = 0, 0, 0
@@ -57,6 +59,22 @@ def last_record(engine):
         time.sleep(3) # 画面確認の為の待機時間
         return id[0]
 
+def file_init():
+    if(os.path.exists(log_path + 'no_data_number.txt')):
+        os.remove(log_path + 'no_data_number.txt')
+    if(os.path.exists(log_path + 'error_number.txt')):
+        os.remove(log_path + 'error_number.txt')
+
+# error_log
+def log_output(file_name, id=None):
+    global log_path
+    file = log_path + file_name
+    if not (os.path.exists(file)):
+        with open(file, mode='w') as f:
+            f.write(str(id) + '\n' )
+    with open(file, mode='a') as f:
+        f.write(str(id) + '\n' )
+
 
 
 
@@ -83,8 +101,11 @@ def create_data_race_id(engine, race_id):
             perfect_data_num += 1
         except:
             error_num += 1
+            log_output('error_number.txt', race_id)
+            print('{}: error.'.format(race_id))
     else:
         no_data_num += 1
+        log_output('no_data_number.txt', race_id)
         print(race_id)
         pass
 
@@ -202,6 +223,7 @@ def create_clomn(n):
 # データベースにあるレース全てを取得
 def create_csv_data():
     engine = engine_generate()
+    file_init()
     max_race_id = last_record(engine) # 最大race_id
     #max_race_id = 10
     min_race_id = 22000

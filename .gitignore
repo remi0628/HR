@@ -1,4 +1,5 @@
 data/
+log/
 __pycache__/
 jupyter_notebook/__pycache__/
 settings.py
