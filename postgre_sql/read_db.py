@@ -3,6 +3,7 @@ import time
 import itertools
 import psycopg2
 import pandas as pd
+import datetime as dt
 from sqlalchemy import *
 from sqlalchemy import create_engine
 import inspect
@@ -59,6 +60,7 @@ def last_record(engine):
         time.sleep(3) # 画面確認の為の待機時間
         return id[0]
 
+# txt初期化
 def file_init():
     if(os.path.exists(log_path + 'no_data_number.txt')):
         os.remove(log_path + 'no_data_number.txt')
@@ -97,7 +99,7 @@ def create_data_race_id(engine, race_id):
             print('|{:5}|{} | R：{:2} | レース距離：{:4} | 1位馬番：{:2} | 土の状態：{:2} '.format(str(race_id), str(race_list[0][5]), str(race_list[0][12]).replace('R', ''), str(race_list[0][4]).replace('m', ''), str(rank1), str(race_list[0][2]) ) )
             save_file = SAVE_FILE_PATH + file_name
             horse_id_list = horse_id_acquisition(engine, race_id)
-            create_past_race_data(engine, race_id, horse_id_list, save_file)
+            create_past_race_data(engine, race_id, horse_id_list, race_list[0][5], save_file)
             perfect_data_num += 1
         except:
             error_num += 1
@@ -151,7 +153,7 @@ def horse_id_acquisition(engine, race_id):
     return horse_id_list
 
 # 馬のidリストを渡してDBから対応するデータをcsv保存
-def create_past_race_data(engine, race_id, horse_id_list, save_file=None):
+def create_past_race_data(engine, race_id, horse_id_list, date, save_file=None):
     for horse_id in horse_id_list:
         horse_list = []
         pdList = []
@@ -189,6 +191,10 @@ def create_past_race_data(engine, race_id, horse_id_list, save_file=None):
                                         'rh.number':'馬番', 'rh.res_rank':'着順', 'rh.res_time':'タイム', 'rh.res_tf_time':'3Fタイム',
                                         'rh.res_corner_indexes':'コーナー通過順', 'rh.weight':'体重', 'rh.handicap':'斤量',
                                         'rh.jockey':'騎手', 'h.trainer':'調教師'}, inplace=True)
+        # レース日より古い過去出走履歴のみ抽出
+        df['年月日'] = pd.to_datetime(df['年月日'])
+        df = df[df['年月日'] <= dt.datetime(date.year, date.month, date.day)]
+        # 日付順に並び替え　（降順）
         df.sort_values(by=['年月日'], inplace=True, ascending=False)
         # print(df.head(5)) # data確認
         # ファイル名構成
