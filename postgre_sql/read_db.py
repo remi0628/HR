@@ -104,11 +104,11 @@ def create_data_race_id(engine, race_id):
         except:
             error_num += 1
             log_output('error_number.txt', race_id)
-            print('{}: error.'.format(race_id))
+            print('|{}|: error.'.format(race_id))
     else:
         no_data_num += 1
         log_output('no_data_number.txt', race_id)
-        print(race_id)
+        print('|{}|'.format(race_id))
         pass
 
 # レースidを渡すと一着の馬番を返す
