@@ -1,7 +1,6 @@
 import glob
 import datetime
 import time
-import datetime
 import numpy as np
 import pandas as pd
 import os
@@ -71,9 +70,8 @@ def make_npy():
     X = np.array(X)
     Y = np.array(Y)
     X = X.astype("float")
-    name = "2019-10-1-2020-08-23"
-    np.save(f"../data/PreprocessingData/X{name}.npy", X)
-    np.save(f"../data/PreprocessingData/Y{name}.npy", Y)
+    np.save(f"{settings.MODEL_PATH_X}", X)
+    np.save(f"{settings.MODEL_PATH_Y}", Y)
 
 
 def inZeroOne(num):
@@ -240,9 +238,12 @@ def make_race_data(df, date, birth, horse_cnt, l=10):
 omit_lower_race, omit_date_race, race_processed
 def operation_check():
     print('-------------------------------------------------')
-    print('前処理の対象から省いたレース数：{}'.format(omit_lower_race + omit_date_race))
-    print('[詳細] 日付：{} | 下級レース：{}'.format(omit_date_race, omit_lower_race))
-    print('前処理したレース数：{}'.format(race_processed))
+    print('[処理詳細]')
+    print('排除日付[{}以前]：{}件 | 排除下級レース[{}以下]：{}件'.format(settings.DATE_RANGE, omit_date_race, settings.EXCLUDE_LOWER_RACE, omit_lower_race))
+    print('前処理の対象から省いたレース総数：{}件'.format(omit_lower_race + omit_date_race))
+    print('前処理済みレース数：{}件'.format(race_processed))
+    print('save_X：{}'.format(settings.MODEL_PATH_X))
+    print('save_Y：{}'.format(settings.MODEL_PATH_Y))
     print('-------------------------------------------------')
 
 
