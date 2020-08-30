@@ -154,13 +154,35 @@ def make_race_data(df, date, birth, l=10):
 
             # 　競馬場
             if row['競馬場'] == "浦和":
-                df_.loc[idx, 'racecourse'] = float(0.25)
+                df_.loc[idx, 'racecourse'] = float(1 / 15)
             elif row['競馬場'] == "船橋":
-                df_.loc[idx, 'racecourse'] = float(0.5)
-            elif row['競馬場'] == "大井":
-                df_.loc[idx, 'racecourse'] = float(0.75)
+                df_.loc[idx, 'racecourse'] = float(1 / 15)
             elif row['競馬場'] == "川崎":
-                df_.loc[idx, 'racecourse'] = float(1)
+                df_.loc[idx, 'racecourse'] = float(1 / 15)
+            elif row['競馬場'] == "東京":
+                df_.loc[idx, 'racecourse'] = float(1 / 15)
+            elif row['競馬場'] == "中京": # 左回り
+                df_.loc[idx, 'racecourse'] = float(1 / 15)
+            elif row['競馬場'] == "大井":
+                df_.loc[idx, 'racecourse'] = float(1 / 15)
+            elif row['競馬場'] == "新潟":
+                df_.loc[idx, 'racecourse'] = float(1 / 15)
+            elif row['競馬場'] == "函館":
+                df_.loc[idx, 'racecourse'] = float(1 / 15)
+            elif row['競馬場'] == "阪神":
+                df_.loc[idx, 'racecourse'] = float(1 / 15)
+            elif row['競馬場'] == "中山":
+                df_.loc[idx, 'racecourse'] = float(1 / 15)
+            elif row['競馬場'] == "京都":
+                df_.loc[idx, 'racecourse'] = float(1 / 15)
+            elif row['競馬場'] == "小倉":
+                df_.loc[idx, 'racecourse'] = float(1 / 15)
+            elif row['競馬場'] == "札幌":
+                df_.loc[idx, 'racecourse'] = float(1 / 15)
+            elif row['競馬場'] == "福島":
+                df_.loc[idx, 'racecourse'] = float(1 / 15)
+            elif row['競馬場'] == "盛岡": # 左周り
+                df_.loc[idx, 'racecourse'] = float(1 / 15)
             else:
                 df_.loc[idx, 'racecourse'] = 0
 
