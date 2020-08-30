@@ -12,9 +12,9 @@ from concurrent import futures
 import sys
 sys.path.append('../')
 import settings
-SAVE_FILE_PATH = settings.SAVE_FILE_PATH2 # 本番時は数字を取る
+SAVE_FILE_PATH = settings.SAVE_FILE_PATH # 本番時は数字を取る
 
-
+omit_lower_race, omit_date_race, race_processed = 0, 0, 0
 
 def read_csv(race, date):
     print(os.path.basename(race))
@@ -27,8 +27,8 @@ def read_csv(race, date):
 
             birth = [int(x) for x in re.findall("\d+", horses[i])[-3:]]
             df = pd.read_csv(horses[i], encoding="cp932")
-            df, ranking = make_race_data(df, date, birth, 10)
-            print('ranking:{}'.format(ranking))
+            df, ranking = make_race_data(df, date, birth, len(horses), 10)
+            # print('ranking:{}'.format(ranking))
 
             if ranking != 0:  # 欠場等でないなら
                 if rankings[ranking - 1] == 0:
@@ -46,22 +46,35 @@ def read_csv(race, date):
 
 def make_npy():
     races = glob.glob(SAVE_FILE_PATH + '*')
-    for i in range(len(races)):
-        year, month, day, roundNumber, length, roadState, top = os.path.basename(races[i]).split("-")
-        #  下級レースの除外
-        if int(roundNumber) <= settings.EXCLUDE_LOWER_RACE:
-            continue
-        race_horse, rankings = read_csv(race=races[i], date=[year, month, day])
 
+    future_list = []
+    with futures.ProcessPoolExecutor(max_workers=None) as executor:
+        global omit_lower_race, omit_date_race, race_processed
+        for i in range(len(races)):
+            year, month, day, roundNumber, length, roadState, top = os.path.basename(races[i]).split("-")
+            # 指定の日付より過去のレースを除外
+            if datetime.date(year=int(year), month=int(month), day=int(day)) <= settings.DATE_RANGE:
+                omit_date_race += 1
+                continue
+            #  下級レースの除外
+            if int(roundNumber) <= settings.EXCLUDE_LOWER_RACE:
+                omit_lower_race += 1
+                continue
+            future = executor.submit(fn=read_csv, race=races[i], date=[year, month, day])
+            race_processed += 1
+            future_list.append(future)
+        _ = futures.as_completed(fs=future_list)
 
-"""
     X = [future.result()[0] for future in future_list]
     Y = [future.result()[1] for future in future_list]
 
     X = np.array(X)
     Y = np.array(Y)
     X = X.astype("float")
-"""
+    name = "2019-10-1-2020-08-23"
+    np.save(f"../data/PreprocessingData/X{name}.npy", X)
+    np.save(f"../data/PreprocessingData/Y{name}.npy", Y)
+
 
 def inZeroOne(num):
     if num > 1:
@@ -71,7 +84,7 @@ def inZeroOne(num):
     else:
         return num
 
-def make_race_data(df, date, birth, l=10):
+def make_race_data(df, date, birth, horse_cnt, l=10):
     df_ = pd.DataFrame(np.zeros((1, 16)), columns=["racecourse", "course_type", "R", "len", "soil_condition", "horse_cnt", "horse_number", "result_rank",
                                                                              "weight", "borden_weight", "birth_days", "sec", "threeF", "corner_order_1", "corner_order_2", "corner_order_3"])
     weightLog = 0
@@ -108,7 +121,7 @@ def make_race_data(df, date, birth, l=10):
 
             df_.loc[idx, 'R'] = float(str(row['R'].replace('R', ''))) / 12
             df_.loc[idx, 'len'] = inZeroOne((float(str(row['距離']).replace('m', '')) - 800) / 3000)
-            df_.loc[idx, 'horse_cnt'] = float(0.5) # 値を取得
+            df_.loc[idx, 'horse_cnt'] = horse_cnt / 18
             df_.loc[idx, 'horse_number'] = float(str(row['馬番'])) / 18
             df_.loc[idx, 'result_rank'] = float(row['着順']) / 18
             df_.loc[idx, 'borden_weight'] = inZeroOne((float(row['斤量']) - 50) / 10)
@@ -120,7 +133,6 @@ def make_race_data(df, date, birth, l=10):
 
             # タイム(秒)
             m_s_f = datetime.timedelta(seconds=row['タイム'])
-            print(m_s_f)
             try:
                 time = datetime.datetime.strptime(str(m_s_f), '%H:%M:%S.%f')
                 df_.loc[idx, 'sec'] = inZeroOne(
@@ -129,7 +141,7 @@ def make_race_data(df, date, birth, l=10):
                 time = datetime.datetime.strptime(str(m_s_f), '%H:%M:%S')
                 df_.loc[idx, 'sec'] = inZeroOne(
                     (float(time.minute * 60 + time.second + time.microsecond / 1000000) - 40) / 250)
-            print('time;{}'.format(time))
+            # print('time;{}'.format(time))
 
 
             # 上3F（3ハロン）
@@ -156,38 +168,37 @@ def make_race_data(df, date, birth, l=10):
             if row['競馬場'] == "浦和":
                 df_.loc[idx, 'racecourse'] = float(1 / 15)
             elif row['競馬場'] == "船橋":
-                df_.loc[idx, 'racecourse'] = float(1 / 15)
+                df_.loc[idx, 'racecourse'] = float(1 / 15) * 2
             elif row['競馬場'] == "川崎":
-                df_.loc[idx, 'racecourse'] = float(1 / 15)
+                df_.loc[idx, 'racecourse'] = float(1 / 15) * 3
             elif row['競馬場'] == "東京":
-                df_.loc[idx, 'racecourse'] = float(1 / 15)
-            elif row['競馬場'] == "中京": # 左回り
-                df_.loc[idx, 'racecourse'] = float(1 / 15)
-            elif row['競馬場'] == "大井":
-                df_.loc[idx, 'racecourse'] = float(1 / 15)
+                df_.loc[idx, 'racecourse'] = float(1 / 15) * 4
             elif row['競馬場'] == "新潟":
-                df_.loc[idx, 'racecourse'] = float(1 / 15)
+                df_.loc[idx, 'racecourse'] = float(1 / 15) * 5
+            elif row['競馬場'] == "中京": # ここまで左回り
+                df_.loc[idx, 'racecourse'] = float(1 / 15) * 6
+            elif row['競馬場'] == "大井":
+                df_.loc[idx, 'racecourse'] = float(1 / 15) * 7
             elif row['競馬場'] == "函館":
-                df_.loc[idx, 'racecourse'] = float(1 / 15)
+                df_.loc[idx, 'racecourse'] = float(1 / 15) * 8
             elif row['競馬場'] == "阪神":
-                df_.loc[idx, 'racecourse'] = float(1 / 15)
+                df_.loc[idx, 'racecourse'] = float(1 / 15) * 9
             elif row['競馬場'] == "中山":
-                df_.loc[idx, 'racecourse'] = float(1 / 15)
+                df_.loc[idx, 'racecourse'] = float(1 / 15) * 10
             elif row['競馬場'] == "京都":
-                df_.loc[idx, 'racecourse'] = float(1 / 15)
+                df_.loc[idx, 'racecourse'] = float(1 / 15) * 11
             elif row['競馬場'] == "小倉":
-                df_.loc[idx, 'racecourse'] = float(1 / 15)
+                df_.loc[idx, 'racecourse'] = float(1 / 15) * 12
             elif row['競馬場'] == "札幌":
-                df_.loc[idx, 'racecourse'] = float(1 / 15)
+                df_.loc[idx, 'racecourse'] = float(1 / 15) * 13
             elif row['競馬場'] == "福島":
-                df_.loc[idx, 'racecourse'] = float(1 / 15)
+                df_.loc[idx, 'racecourse'] = float(1 / 15) * 14
             elif row['競馬場'] == "盛岡": # 左周り
-                df_.loc[idx, 'racecourse'] = float(1 / 15)
+                df_.loc[idx, 'racecourse'] = float(1 / 15) * 15
             else:
                 df_.loc[idx, 'racecourse'] = 0
 
             # レース日
-            print(str(row['年月日']))
             raceDay = [int(x) for x in str(row['年月日']).split("-")]
             date = [int(x) for x in date]
             if raceDay[0] < 50:
@@ -200,7 +211,7 @@ def make_race_data(df, date, birth, l=10):
 
             # 当日の場合不明なもの
             if raceDay == date:
-                ranking = row['着順']
+                ranking = int(row['着順'])
                 df_.loc[idx, 'result_rank'] = 0
                 df_.loc[idx, 'sec'] = 0
                 df_.loc[idx, 'weight'] = 0
@@ -222,13 +233,24 @@ def make_race_data(df, date, birth, l=10):
     while len(df_) < l:
         df_.loc[len(df_) + len(dropList)] = 0
 
-    print(df_.head(10))
+    # print(df_.head(5))
     return df_, ranking
 
 
+omit_lower_race, omit_date_race, race_processed
+def operation_check():
+    print('-------------------------------------------------')
+    print('前処理の対象から省いたレース数：{}'.format(omit_lower_race + omit_date_race))
+    print('[詳細] 日付：{} | 下級レース：{}'.format(omit_date_race, omit_lower_race))
+    print('前処理したレース数：{}'.format(race_processed))
+    print('-------------------------------------------------')
+
 
 def main():
+    now = time.time()
     make_npy()
+    operation_check()
+    print("レースデータ前処理時間 ：{:.2f}秒".format(time.time() - now) )
 
 
 
