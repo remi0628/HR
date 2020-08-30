@@ -1,5 +1,6 @@
 data/
 log/
+learning/model/
 __pycache__/
 jupyter_notebook/__pycache__/
 settings.py
