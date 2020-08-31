@@ -15,8 +15,8 @@ SAVE_FILE_PATH = settings.SAVE_FILE_PATH
 log_path = '../log/'
 
 # 空のrace_id数, データ引き抜き最中にエラーを起こした数, 正常に取得できた数
-global no_data_num, error_num, perfect_data_num
-no_data_num, error_num, perfect_data_num = 0, 0, 0
+global no_data_num, error_num, obstacle_course_num, perfect_data_num
+no_data_num, error_num, obstacle_course_num, perfect_data_num = 0, 0, 0, 0
 
 
 # DB接続
@@ -38,6 +38,7 @@ def q_display(q, id=None):
 def operation_check():
     print('-------------------------------------------------')
     print('正常に取得したレース数：{}'.format(str(perfect_data_num)))
+    print('省いた障害物レース数　：{}'.format(str(obstacle_course_num)))
     print('空の[race_id]数：{}　|　エラー数：{}'.format(str(no_data_num - 1), str(error_num)))
     print('-------------------------------------------------')
 
@@ -66,6 +67,8 @@ def file_init():
         os.remove(log_path + 'no_data_number.txt')
     if(os.path.exists(log_path + 'error_number.txt')):
         os.remove(log_path + 'error_number.txt')
+    if(os.path.exists(log_path + 'obstacle_course_num.txt')):
+        os.remove(log_path + 'obstacle_course_num.txt')
 
 # error_log
 def log_output(file_name, id=None):
@@ -82,7 +85,7 @@ def log_output(file_name, id=None):
 
 # 渡されたレース毎にファイル作成, 馬のデータを入れる
 def create_data_race_id(engine, race_id):
-    global no_data_num, error_num, perfect_data_num
+    global no_data_num, error_num, obstacle_course_num, perfect_data_num
     flag = conf_exist_database(engine, race_id) # idチェック
     if flag == 1:
         try:
@@ -93,6 +96,11 @@ def create_data_race_id(engine, race_id):
             result = engine.execute(q)
             for row in result:
                 race_list.append(row)
+            if race_list[0][3] == '障': # 障害物レース除外
+                obstacle_course_num += 1
+                log_output('obstacle_course_num.txt', race_id)
+                print('|{}|: obstacle course exclusion.'.format(race_id))
+                pass
             rank1 = race_horse_rank1(engine, race_id) # 1位の馬番取得
             # レース日-R-距離-土状態-1位馬番
             file_name = '{}-{}-{}-{}-{}'.format( str(race_list[0][5]), str(race_list[0][12]).replace('R', '').zfill(2), str(race_list[0][4]).replace('m', ''), str(race_list[0][2]), str(rank1) )
@@ -194,6 +202,8 @@ def create_past_race_data(engine, race_id, horse_id_list, date, save_file=None):
         # レース日より古い過去出走履歴のみ抽出
         df['年月日'] = pd.to_datetime(df['年月日'])
         df = df[df['年月日'] <= dt.datetime(date.year, date.month, date.day)]
+        # 障害物コースは除外
+        df = df[df['コース種別'] != '障']
         # 日付順に並び替え　（降順）
         df.sort_values(by=['年月日'], inplace=True, ascending=False)
         # print(df.head(5)) # data確認
