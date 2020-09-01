@@ -11,10 +11,10 @@ from concurrent import futures
 import sys
 sys.path.append('../')
 import settings
-SAVE_FILE_PATH = settings.SAVE_FILE_PATH # 本番時は数字を取る
+SAVE_FILE_PATH = settings.SAVE_FILE_PATH2 # 本番時は数字を取る
 
 omit_lower_race, omit_date_race, race_processed = 0, 0, 0
-missing_value = 0
+
 
 def read_csv(race, date):
     print(os.path.basename(race))
@@ -36,7 +36,7 @@ def read_csv(race, date):
                 else:
                     rankings[ranking] = int(re.findall("\d+", os.path.basename(horses[i]))[0])
 
-            race_horse.append(df[:10].values)
+                race_horse.append(df[:10].values)
         else:
             race_horse.append(np.zeros((10, 16)))
 
@@ -235,17 +235,17 @@ def make_race_data(df, date, birth, horse_cnt, l=10):
     while len(df_) < l:
         df_.loc[len(df_) + len(dropList)] = 0
 
-    df_ = missing_value_check(df_)
+    df_=df_.replace([np.inf, -np.inf], np.nan)
+    df_  = missing_value_check(df_)
 
     #print(df_.head(10))
     return df_, ranking
 
 
 def missing_value_check(df):
-    if df.isnull().values.sum() != 0:
-        global missing_value
-        missing_value += 1
-        print('missing_value：{}'.format(missing_value))
+    miss_num = df.isnull().values.sum()
+    if miss_num != 0:
+        print('missing_value：{}'.format(miss_num))
         #print(df)
         df = df.fillna(0) # Nanの値を0に置換
     return df
@@ -253,9 +253,6 @@ def missing_value_check(df):
 
 # 処理結果
 def operation_check():
-    print('-------------------------------------------------')
-    print('[データ検査]')
-    print('欠損値[Nan]が含まれているデータフレーム：{}件'.format(missing_value))
     print('-------------------------------------------------')
     print('[処理詳細]')
     print('排除日付[{}以前]：{}件 | 排除下級レース[{}以下]：{}件'.format(settings.DATE_RANGE, omit_date_race, settings.EXCLUDE_LOWER_RACE, omit_lower_race))
