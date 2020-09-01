@@ -14,6 +14,7 @@ import settings
 SAVE_FILE_PATH = settings.SAVE_FILE_PATH # 本番時は数字を取る
 
 omit_lower_race, omit_date_race, race_processed = 0, 0, 0
+missing_value = 0
 
 def read_csv(race, date):
     print(os.path.basename(race))
@@ -90,6 +91,9 @@ def make_race_data(df, date, birth, horse_cnt, l=10):
     check = False
     ranking = 0
     for idx, row in df.iterrows():
+        # 10レースまで取得
+        if len(df_) > 9:
+            continue
         check = True
         if str(row['着順']) == "nan" or str(row['タイム']) == "nan":
             dropList.append(idx)
@@ -231,12 +235,27 @@ def make_race_data(df, date, birth, horse_cnt, l=10):
     while len(df_) < l:
         df_.loc[len(df_) + len(dropList)] = 0
 
-    # print(df_.head(5))
+    df_ = missing_value_check(df_)
+
+    #print(df_.head(10))
     return df_, ranking
 
 
-omit_lower_race, omit_date_race, race_processed
+def missing_value_check(df):
+    if df.isnull().values.sum() != 0:
+        global missing_value
+        missing_value += 1
+        print('missing_value：{}'.format(missing_value))
+        #print(df)
+        df = df.fillna(0) # Nanの値を0に置換
+    return df
+
+
+# 処理結果
 def operation_check():
+    print('-------------------------------------------------')
+    print('[データ検査]')
+    print('欠損値[Nan]が含まれているデータフレーム：{}件'.format(missing_value))
     print('-------------------------------------------------')
     print('[処理詳細]')
     print('排除日付[{}以前]：{}件 | 排除下級レース[{}以下]：{}件'.format(settings.DATE_RANGE, omit_date_race, settings.EXCLUDE_LOWER_RACE, omit_lower_race))
