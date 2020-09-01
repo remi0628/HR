@@ -24,7 +24,6 @@ def read_csv(race, date):
     rankings = np.zeros(18)
     for i in range(18):
         if len(horses) > i:
-
             birth = [int(x) for x in re.findall("\d+", horses[i])[-3:]]
             df = pd.read_csv(horses[i], encoding="cp932")
             df, ranking = make_race_data(df, date, birth, len(horses), 10)
@@ -36,7 +35,7 @@ def read_csv(race, date):
                 else:
                     rankings[ranking] = int(re.findall("\d+", os.path.basename(horses[i]))[0])
 
-                race_horse.append(df[:10].values)
+            race_horse.append(df[:10].values)
         else:
             race_horse.append(np.zeros((10, 16)))
 
