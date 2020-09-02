@@ -1,7 +1,10 @@
+import os
 import numpy as np
 import tensorflow as tf
+from tensorflow import keras
 from tensorflow.keras.layers import *
 import datetime
+
 
 import sys
 sys.path.append('../')
@@ -17,8 +20,7 @@ X = np.load(f"{settings.MODEL_PATH_X}")
 Y = np.load(f"{settings.MODEL_PATH_Y}")
 Y = Y[:, 0] - 1  # 一位のみ取得
 
-
-def train_test_split(data, size=0.9):
+def train_test_split(data, size=0.7):
     length = len(data)
     np.random.seed(42)
     p = np.random.permutation(length)
@@ -26,8 +28,8 @@ def train_test_split(data, size=0.9):
     return data[:int(length*size)], data[int(length*size):]
 
 
-x_train, x_test = train_test_split(X, size=0.9)
-y_train, y_test = train_test_split(Y, size=0.9)
+x_train, x_test = train_test_split(X, size=0.8)
+y_train, y_test = train_test_split(Y, size=0.8)
 del X, Y
 
 
@@ -54,10 +56,11 @@ x = Layers(x, "conv", 256, kernel=(1, 1), drop=dropouts)
 x = Layers(x, "conv", 256, kernel=(1, 1), drop=dropouts)
 x = Layers(x, "conv", 512, kernel=(1, 10), drop=dropouts)
 x = Layers(x, "conv", 512, kernel=(1, 1), drop=dropouts)
-x = Layers(x, "conv", 1024, kernel=(16, 1), drop=dropouts)
+x = Layers(x, "conv", 1024, kernel=(18, 1), drop=dropouts)
 
 x = Flatten()(x)
 
+dropouts = 0.3
 x = Layers(x, "dense", 512, drop=dropouts)
 x = Layers(x, "dense", 512, drop=dropouts)
 x = Layers(x, "dense", 256, drop=dropouts)
@@ -65,16 +68,25 @@ outputs = Layers(x, "dense", 18, activation="softmax", bn=False)
 
 model = tf.keras.Model(inputs=inputs, outputs=outputs)
 
-model.compile(optimizer=tf.keras.optimizers.Nadam(learning_rate=0.0001),
+model.compile(optimizer=tf.keras.optimizers.Nadam(learning_rate=0.001),
               loss='sparse_categorical_crossentropy', metrics=['accuracy'])
 
 model.summary()
 
+'''
+model.save_weights('../learning/model/checkpoint/m.ckpt'.format(epoch=0))
 
-history = model.fit(x_train, y_train, batch_size=8, epochs=10, validation_data=(x_test, y_test),
-                    callbacks=tf.keras.callbacks.EarlyStopping(monitor="val_accuracy",
-                                                               patience=30,
-                                                               restore_best_weights=True))
+
+dir = os.path.dirname('../learning/model/checkpoint/')
+latest = tf.train.latest_checkpoint(dir)
+model.load_weights(latest)
+'''
+
+call_back = tf.keras.callbacks.EarlyStopping(monitor="val_accuracy",
+                                           patience=30,
+                                           restore_best_weights=True)
+history = model.fit(x_train, y_train, batch_size=8, epochs=100, validation_data=(x_test, y_test),
+                    callbacks=[call_back])
 
 now = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
 model.save(f"model/horse{now}-{int(10000 * max(history.history['val_accuracy']))}.h5")
