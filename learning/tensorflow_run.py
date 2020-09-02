@@ -49,7 +49,7 @@ def Layers(data, mode, filters, kernel=None, bn=True, activation="relu", drop=No
     return x1
 
 
-dropouts = 0.5
+dropouts = 0.6
 inputs = Input(shape=(18, 10, 16))
 x = Layers(inputs, "conv", 128, kernel=(1, 1), drop=dropouts)
 x = Layers(x, "conv", 128, kernel=(1, 1), drop=dropouts)
@@ -60,7 +60,7 @@ x = Layers(x, "conv", 512, kernel=(18, 1), drop=dropouts)
 
 x = Flatten()(x)
 
-dropouts = 0.25
+dropouts = 0.5
 x = Layers(x, "dense", 256, drop=dropouts)
 x = Layers(x, "dense", 256, drop=dropouts)
 x = Layers(x, "dense", 128, drop=dropouts)
@@ -73,20 +73,14 @@ model.compile(optimizer=tf.keras.optimizers.Nadam(learning_rate=0.001),
 
 model.summary()
 
-'''
-model.save_weights('../learning/model/checkpoint/m.ckpt'.format(epoch=0))
-
-
-dir = os.path.dirname('../learning/model/checkpoint/')
-latest = tf.train.latest_checkpoint(dir)
-model.load_weights(latest)
-'''
-
 call_back = tf.keras.callbacks.EarlyStopping(monitor="val_accuracy",
-                                           patience=30,
+                                           patience=500,
                                            restore_best_weights=True)
-history = model.fit(x_train, y_train, batch_size=8, epochs=50, validation_data=(x_test, y_test),
+
+epoch = 200
+batch = 8
+history = model.fit(x_train, y_train, batch_size=batch, epochs=epoch, validation_data=(x_test, y_test),
                     callbacks=[call_back])
 
 now = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
-model.save(f"model/horse{now}-{int(10000 * max(history.history['val_accuracy']))}.h5")
+model.save(f"model/horse{now}-b{batch}-epo{epoch}-valacc{int(10000 * max(history.history['val_accuracy']))}.h5")
