@@ -49,21 +49,21 @@ def Layers(data, mode, filters, kernel=None, bn=True, activation="relu", drop=No
     return x1
 
 
-dropouts = 0.6
+dropouts = 0.5
 inputs = Input(shape=(18, 10, 16))
-x = Layers(inputs, "conv", 256, kernel=(1, 1), drop=dropouts)
+x = Layers(inputs, "conv", 128, kernel=(1, 1), drop=dropouts)
+x = Layers(x, "conv", 128, kernel=(1, 1), drop=dropouts)
+x = Layers(x, "conv", 128, kernel=(1, 1), drop=dropouts)
+x = Layers(x, "conv", 256, kernel=(1, 10), drop=dropouts)
 x = Layers(x, "conv", 256, kernel=(1, 1), drop=dropouts)
-x = Layers(x, "conv", 256, kernel=(1, 1), drop=dropouts)
-x = Layers(x, "conv", 512, kernel=(1, 10), drop=dropouts)
-x = Layers(x, "conv", 512, kernel=(1, 1), drop=dropouts)
-x = Layers(x, "conv", 1024, kernel=(18, 1), drop=dropouts)
+x = Layers(x, "conv", 512, kernel=(18, 1), drop=dropouts)
 
 x = Flatten()(x)
 
-dropouts = 0.3
-x = Layers(x, "dense", 512, drop=dropouts)
-x = Layers(x, "dense", 512, drop=dropouts)
+dropouts = 0.25
 x = Layers(x, "dense", 256, drop=dropouts)
+x = Layers(x, "dense", 256, drop=dropouts)
+x = Layers(x, "dense", 128, drop=dropouts)
 outputs = Layers(x, "dense", 18, activation="softmax", bn=False)
 
 model = tf.keras.Model(inputs=inputs, outputs=outputs)
@@ -85,7 +85,7 @@ model.load_weights(latest)
 call_back = tf.keras.callbacks.EarlyStopping(monitor="val_accuracy",
                                            patience=30,
                                            restore_best_weights=True)
-history = model.fit(x_train, y_train, batch_size=8, epochs=100, validation_data=(x_test, y_test),
+history = model.fit(x_train, y_train, batch_size=8, epochs=50, validation_data=(x_test, y_test),
                     callbacks=[call_back])
 
 now = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
