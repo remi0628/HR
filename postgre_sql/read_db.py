@@ -184,6 +184,7 @@ def create_past_race_data(engine, race_id, horse_id_list, date, save_file=None):
                 literal_column('rh.handicap'),
                 literal_column('rh.jockey'),
                 literal_column('h.trainer'),
+                literal_column('rh.odds'),
             ]).select_from(
                  table('races').alias('r')
                 .join(table('race_horses').alias('rh') , text('rh.race_id = r.id') )
@@ -198,7 +199,7 @@ def create_past_race_data(engine, race_id, horse_id_list, date, save_file=None):
                                         'r.r':'R', 'r.title':'レース名', 'r.course_distance':'距離', 'r.course_status':'馬場状態',
                                         'rh.number':'馬番', 'rh.res_rank':'着順', 'rh.res_time':'タイム', 'rh.res_tf_time':'3Fタイム',
                                         'rh.res_corner_indexes':'コーナー通過順', 'rh.weight':'体重', 'rh.handicap':'斤量',
-                                        'rh.jockey':'騎手', 'h.trainer':'調教師'}, inplace=True)
+                                        'rh.jockey':'騎手', 'h.trainer':'調教師', 'rh.odds':'オッズ'}, inplace=True)
         # レース日より古い過去出走履歴のみ抽出
         df['年月日'] = pd.to_datetime(df['年月日'])
         df = df[df['年月日'] <= dt.datetime(date.year, date.month, date.day)]
@@ -242,7 +243,7 @@ def create_csv_data():
     file_init()
     max_race_id = last_record(engine) # 最大race_id
     #max_race_id = 10
-    min_race_id = 22000
+    min_race_id = 1
     now = time.time()
     for race_id in range(min_race_id , int(max_race_id)+1):
         create_data_race_id(engine, race_id)
