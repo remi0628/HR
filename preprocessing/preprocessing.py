@@ -11,7 +11,7 @@ from concurrent import futures
 import sys
 sys.path.append('../')
 import settings
-SAVE_FILE_PATH = settings.SAVE_FILE_PATH2 # 本番時は数字を取る
+SAVE_FILE_PATH = settings.SAVE_FILE_PATH # 本番時は数字を取る
 
 omit_lower_race, omit_date_race, race_processed = 0, 0, 0
 
@@ -26,7 +26,7 @@ def read_csv(race, date):
         if len(horses) > i:
             birth = [int(x) for x in re.findall("\d+", horses[i])[-3:]]
             df = pd.read_csv(horses[i], encoding="cp932")
-            df, ranking = make_race_data(df, date, birth, len(horses), 10)
+            df, ranking = make_race_data(df, date, birth, len(horses), 5)
             # print('ranking:{}'.format(ranking))
 
             if ranking != 0:  # 欠場等でないなら
@@ -35,9 +35,9 @@ def read_csv(race, date):
                 else:
                     rankings[ranking] = int(re.findall("\d+", os.path.basename(horses[i]))[0])
 
-            race_horse.append(df[:10].values)
+            race_horse.append(df[:5].values)
         else:
-            race_horse.append(np.zeros((10, 16)))
+            race_horse.append(np.zeros((5, 16)))
 
     return race_horse, rankings
 
@@ -82,9 +82,12 @@ def inZeroOne(num):
     else:
         return num
 
-def make_race_data(df, date, birth, horse_cnt, l=10):
-    df_ = pd.DataFrame(np.zeros((1, 16)), columns=["racecourse", "course_type", "R", "len", "soil_condition", "horse_cnt", "horse_number", "result_rank",
-                                                                             "weight", "borden_weight", "birth_days", "sec", "threeF", "corner_order_1", "corner_order_2", "corner_order_3"])
+def make_race_data(df, date, birth, horse_cnt, l=5):
+    df_ = pd.DataFrame(np.zeros((1, 30)), columns=["course_type", "R", "len", "soil_condition", "horse_cnt", "horse_number", "result_rank",
+                                                                             "weight", "borden_weight", "birth_days", "sec", "threeF", "corner_order_1", "corner_order_2", "corner_order_3",
+                                                                             "racecourse_urawa", "racecourse_funabashi", "racecourse_kawasaki", "racecourse_tokyo", "racecourse_nigata",
+                                                                             "racecourse_tyukei", "racecourse_ooi", "racecourse_hakodate", "racecourse_hanshin", "racecourse_nakayama",
+                                                                             "racecourse_kyoto", "racecourse_ogura", "racecourse_sapporo", "racecourse_fukushima", "racecourse_morioka"])
     weightLog = 0
     dropList = []
     check = False
@@ -102,23 +105,23 @@ def make_race_data(df, date, birth, horse_cnt, l=10):
         try:
             # 馬場状態
             if row['馬場状態'] == '良':
+                df_.loc[idx, 'soil_condition'] = float(0)
+            elif row['馬場状態'] == '稍':
                 df_.loc[idx, 'soil_condition'] = float(0.25)
             elif row['馬場状態'] == '重':
-                df_.loc[idx, 'soil_condition'] = float(0.5)
-            elif row['馬場状態'] == '稍':
                 df_.loc[idx, 'soil_condition'] = float(0.75)
             elif row['馬場状態'] == '不':
                 df_.loc[idx, 'soil_condition'] = float(1)
             else:
-                df_.loc[idx, 'soil_condition'] = 0
+                df_.loc[idx, 'soil_condition'] = float(0.5)
 
             # コース種別
             if row['コース種別'] == 'ダ':
-                df_.loc[idx, 'course_type'] = float(0.5)
+                df_.loc[idx, 'course_type'] = float(0)
             elif row['コース種別'] == '芝':
                 df_.loc[idx, 'course_type'] = float(1)
             else:
-                df_.loc[idx, 'course_type'] = 0
+                df_.loc[idx, 'course_type'] = float(0.5)
 
             df_.loc[idx, 'R'] = float(str(row['R'].replace('R', ''))) / 12
             df_.loc[idx, 'len'] = inZeroOne((float(str(row['距離']).replace('m', '')) - 800) / 3000)
@@ -166,38 +169,21 @@ def make_race_data(df, date, birth, horse_cnt, l=10):
                 df_.loc[idx, 'corner_order_3'] = 0
 
             # 　競馬場
-            if row['競馬場'] == "浦和":
-                df_.loc[idx, 'racecourse'] = float(1 / 15)
-            elif row['競馬場'] == "船橋":
-                df_.loc[idx, 'racecourse'] = float(1 / 15) * 2
-            elif row['競馬場'] == "川崎":
-                df_.loc[idx, 'racecourse'] = float(1 / 15) * 3
-            elif row['競馬場'] == "東京":
-                df_.loc[idx, 'racecourse'] = float(1 / 15) * 4
-            elif row['競馬場'] == "新潟":
-                df_.loc[idx, 'racecourse'] = float(1 / 15) * 5
-            elif row['競馬場'] == "中京": # ここまで左回り
-                df_.loc[idx, 'racecourse'] = float(1 / 15) * 6
-            elif row['競馬場'] == "大井":
-                df_.loc[idx, 'racecourse'] = float(1 / 15) * 7
-            elif row['競馬場'] == "函館":
-                df_.loc[idx, 'racecourse'] = float(1 / 15) * 8
-            elif row['競馬場'] == "阪神":
-                df_.loc[idx, 'racecourse'] = float(1 / 15) * 9
-            elif row['競馬場'] == "中山":
-                df_.loc[idx, 'racecourse'] = float(1 / 15) * 10
-            elif row['競馬場'] == "京都":
-                df_.loc[idx, 'racecourse'] = float(1 / 15) * 11
-            elif row['競馬場'] == "小倉":
-                df_.loc[idx, 'racecourse'] = float(1 / 15) * 12
-            elif row['競馬場'] == "札幌":
-                df_.loc[idx, 'racecourse'] = float(1 / 15) * 13
-            elif row['競馬場'] == "福島":
-                df_.loc[idx, 'racecourse'] = float(1 / 15) * 14
-            elif row['競馬場'] == "盛岡": # 左周り
-                df_.loc[idx, 'racecourse'] = float(1 / 15) * 15
-            else:
-                df_.loc[idx, 'racecourse'] = 0
+            df_.loc[idx, 'racecourse_urawa'] = 1 if row['競馬場'] == "浦和" else 0
+            df_.loc[idx, 'racecourse_funabashi'] = 1 if row['競馬場'] == "船橋" else 0
+            df_.loc[idx, 'racecourse_kawasaki'] = 1 if row['競馬場'] == "川崎" else 0
+            df_.loc[idx, 'racecourse_tokyo'] = 1 if row['競馬場'] == "東京" else 0
+            df_.loc[idx, 'racecourse_nigata'] = 1 if row['競馬場'] == "新潟" else 0
+            df_.loc[idx, 'racecourse_tyukei'] = 1 if row['競馬場'] == "中京" else 0 # ここまで左回り
+            df_.loc[idx, 'racecourse_ooi'] = 1 if row['競馬場'] == "大井" else 0
+            df_.loc[idx, 'racecourse_hakodate'] = 1 if row['競馬場'] == "函館" else 0
+            df_.loc[idx, 'racecourse_hanshin'] = 1 if row['競馬場'] == "阪神" else 0
+            df_.loc[idx, 'racecourse_nakayama'] = 1 if row['競馬場'] == "中山" else 0
+            df_.loc[idx, 'racecourse_kyoto'] = 1 if row['競馬場'] == "京都" else 0
+            df_.loc[idx, 'racecourse_ogura'] = 1 if row['競馬場'] == "小倉" else 0
+            df_.loc[idx, 'racecourse_sapporo'] = 1 if row['競馬場'] == "札幌" else 0
+            df_.loc[idx, 'racecourse_fukushima'] = 1 if row['競馬場'] == "福島" else 0
+            df_.loc[idx, 'racecourse_morioka'] = 1 if row['競馬場'] == "盛岡" else 0 # 左周り
 
             # レース日
             raceDay = [int(x) for x in str(row['年月日']).split("-")]
