@@ -26,7 +26,7 @@ def read_csv(race, date):
         if len(horses) > i:
             birth = [int(x) for x in re.findall("\d+", horses[i])[-3:]]
             df = pd.read_csv(horses[i], encoding="cp932")
-            df, ranking = make_race_data(df, date, birth, len(horses), 5)
+            df, ranking = make_race_data(df, date, birth, len(horses), 10)
             # print('ranking:{}'.format(ranking))
 
             if ranking != 0:  # 欠場等でないなら
@@ -35,9 +35,9 @@ def read_csv(race, date):
                 else:
                     rankings[ranking] = int(re.findall("\d+", os.path.basename(horses[i]))[0])
 
-            race_horse.append(df[:5].values)
+            race_horse.append(df[:10].values)
         else:
-            race_horse.append(np.zeros((5, 16)))
+            race_horse.append(np.zeros((10, 30)))
 
     return race_horse, rankings
 
@@ -82,7 +82,7 @@ def inZeroOne(num):
     else:
         return num
 
-def make_race_data(df, date, birth, horse_cnt, l=5):
+def make_race_data(df, date, birth, horse_cnt, l=10):
     df_ = pd.DataFrame(np.zeros((1, 30)), columns=["course_type", "R", "len", "soil_condition", "horse_cnt", "horse_number", "result_rank",
                                                                              "weight", "borden_weight", "birth_days", "sec", "threeF", "corner_order_1", "corner_order_2", "corner_order_3",
                                                                              "racecourse_urawa", "racecourse_funabashi", "racecourse_kawasaki", "racecourse_tokyo", "racecourse_nigata",
