@@ -11,7 +11,7 @@ from concurrent import futures
 import sys
 sys.path.append('../')
 import settings
-SAVE_FILE_PATH = settings.SAVE_FILE_PATH # 本番時は数字を取る
+SAVE_FILE_PATH = settings.SAVE_FILE_PATH2 # 本番時は数字を取る
 
 omit_lower_race, omit_date_race, race_processed = 0, 0, 0
 
@@ -103,23 +103,33 @@ def make_race_data(df, date, birth, horse_cnt, l=10):
             continue
 
         try:
-            # 馬場状態
-            if row['馬場状態'] == '良':
-                df_.loc[idx, 'soil_condition'] = float(0)
-            elif row['馬場状態'] == '稍':
-                df_.loc[idx, 'soil_condition'] = float(0.25)
-            elif row['馬場状態'] == '重':
-                df_.loc[idx, 'soil_condition'] = float(0.75)
-            elif row['馬場状態'] == '不':
-                df_.loc[idx, 'soil_condition'] = float(1)
-            else:
-                df_.loc[idx, 'soil_condition'] = float(0.5)
-
             # コース種別
             if row['コース種別'] == 'ダ':
                 df_.loc[idx, 'course_type'] = float(0)
+                # 馬場状態
+                if row['馬場状態'] == '重':
+                    df_.loc[idx, 'soil_condition'] = float(0)
+                elif row['馬場状態'] == '稍':
+                    df_.loc[idx, 'soil_condition'] = float(0.25)
+                elif row['馬場状態'] == '不':
+                    df_.loc[idx, 'soil_condition'] = float(0.75)
+                elif row['馬場状態'] == '良':
+                    df_.loc[idx, 'soil_condition'] = float(1)
+                else:
+                    df_.loc[idx, 'soil_condition'] = float(0.5)
             elif row['コース種別'] == '芝':
                 df_.loc[idx, 'course_type'] = float(1)
+                # 馬場状態
+                if row['馬場状態'] == '良':
+                    df_.loc[idx, 'soil_condition'] = float(0)
+                elif row['馬場状態'] == '稍':
+                    df_.loc[idx, 'soil_condition'] = float(0.25)
+                elif row['馬場状態'] == '重':
+                    df_.loc[idx, 'soil_condition'] = float(0.75)
+                elif row['馬場状態'] == '不':
+                    df_.loc[idx, 'soil_condition'] = float(1)
+                else:
+                    df_.loc[idx, 'soil_condition'] = float(0.5)
             else:
                 df_.loc[idx, 'course_type'] = float(0.5)
 
@@ -128,7 +138,7 @@ def make_race_data(df, date, birth, horse_cnt, l=10):
             df_.loc[idx, 'horse_cnt'] = horse_cnt / 18
             df_.loc[idx, 'horse_number'] = float(str(row['馬番'])) / 18
             df_.loc[idx, 'result_rank'] = float(row['着順']) / 18
-            df_.loc[idx, 'borden_weight'] = inZeroOne((float(row['斤量']) - 50) / 10)
+            df_.loc[idx, 'borden_weight'] = inZeroOne((float(row['斤量']) - 40) / 30)
             if row['体重'] == "計不":
                 df_.loc[idx, 'weight'] = weightLog
             else:
