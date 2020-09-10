@@ -7,11 +7,12 @@ import pandas as pd
 import os
 import re
 import traceback
+from concurrent import futures
 
 import sys
 sys.path.append('../')
 import settings
-SAVE_FILE_PATH = settings.SAVE_FILE_PATH2
+SAVE_FILE_PATH = settings.SAVE_FILE_PATH
 
 log_path = '../log/'
 del_flag, num = 0, 0
@@ -71,7 +72,8 @@ def operation_check():
 def main():
     now = time.time()
     file_init()
-    delete_file()
+    with futures.ProcessPoolExecutor(max_workers=None) as executor:
+        executor.submit(fn=delete_file)
     operation_check()
     print("不要レースデータ処理時間 ：{:.2f}秒".format(time.time() - now) )
 
