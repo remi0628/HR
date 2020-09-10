@@ -11,9 +11,9 @@ from concurrent import futures
 import sys
 sys.path.append('../')
 import settings
-SAVE_FILE_PATH = settings.SAVE_FILE_PATH2 # 本番時は数字を取る
+SAVE_FILE_PATH = settings.SAVE_FILE_PATH # 本番時は数字を取る
 
-omit_lower_race, omit_date_race, race_processed = 0, 0, 0
+omit_lower_race, omit_date_race, none_race, race_processed = 0, 0, 0, 0
 
 
 def read_csv(race, date):
@@ -48,7 +48,7 @@ def make_npy():
 
     future_list = []
     with futures.ProcessPoolExecutor(max_workers=None) as executor:
-        global omit_lower_race, omit_date_race, race_processed
+        global omit_lower_race, omit_date_race, none_race, race_processed
         for i in range(len(races)):
             year, month, day, roundNumber, length, roadState, top = os.path.basename(races[i]).split("-")
             # 指定の日付より過去のレースを除外
@@ -58,6 +58,10 @@ def make_npy():
             #  下級レースの除外
             if int(roundNumber) <= settings.EXCLUDE_LOWER_RACE:
                 omit_lower_race += 1
+                continue
+            # 土の状態がNoneの場合レースを除外
+            if roadState == 'None':
+                none_race += 1
                 continue
             future = executor.submit(fn=read_csv, race=races[i], date=[year, month, day])
             race_processed += 1
@@ -103,33 +107,23 @@ def make_race_data(df, date, birth, horse_cnt, l=10):
             continue
 
         try:
+            # 馬場状態
+            if row['馬場状態'] == '良':
+                df_.loc[idx, 'soil_condition'] = float(0)
+            elif row['馬場状態'] == '稍':
+                df_.loc[idx, 'soil_condition'] = float(0.25)
+            elif row['馬場状態'] == '重':
+                df_.loc[idx, 'soil_condition'] = float(0.75)
+            elif row['馬場状態'] == '不':
+                df_.loc[idx, 'soil_condition'] = float(1)
+            else:
+                df_.loc[idx, 'soil_condition'] = float(0.5)
+
             # コース種別
             if row['コース種別'] == 'ダ':
                 df_.loc[idx, 'course_type'] = float(0)
-                # 馬場状態
-                if row['馬場状態'] == '重':
-                    df_.loc[idx, 'soil_condition'] = float(0)
-                elif row['馬場状態'] == '稍':
-                    df_.loc[idx, 'soil_condition'] = float(0.25)
-                elif row['馬場状態'] == '不':
-                    df_.loc[idx, 'soil_condition'] = float(0.75)
-                elif row['馬場状態'] == '良':
-                    df_.loc[idx, 'soil_condition'] = float(1)
-                else:
-                    df_.loc[idx, 'soil_condition'] = float(0.5)
             elif row['コース種別'] == '芝':
                 df_.loc[idx, 'course_type'] = float(1)
-                # 馬場状態
-                if row['馬場状態'] == '良':
-                    df_.loc[idx, 'soil_condition'] = float(0)
-                elif row['馬場状態'] == '稍':
-                    df_.loc[idx, 'soil_condition'] = float(0.25)
-                elif row['馬場状態'] == '重':
-                    df_.loc[idx, 'soil_condition'] = float(0.75)
-                elif row['馬場状態'] == '不':
-                    df_.loc[idx, 'soil_condition'] = float(1)
-                else:
-                    df_.loc[idx, 'soil_condition'] = float(0.5)
             else:
                 df_.loc[idx, 'course_type'] = float(0.5)
 
@@ -250,8 +244,8 @@ def missing_value_check(df):
 def operation_check():
     print('-------------------------------------------------')
     print('[処理詳細]')
-    print('排除日付[{}以前]：{}件 | 排除下級レース[{}以下]：{}件'.format(settings.DATE_RANGE, omit_date_race, settings.EXCLUDE_LOWER_RACE, omit_lower_race))
-    print('前処理の対象から省いたレース総数：{}件'.format(omit_lower_race + omit_date_race))
+    print('排除日付[{}以前]：{}件 | 排除下級レース[{}以下]：{}件 | 馬場状態Noneレース：{}件'.format(settings.DATE_RANGE, omit_date_race, settings.EXCLUDE_LOWER_RACE, omit_lower_race, none_race))
+    print('前処理の対象から省いたレース総数：{}件'.format(omit_lower_race + omit_date_race + none_race))
     print('前処理済みレース数：{}件'.format(race_processed))
     print('save_X：{}'.format(settings.MODEL_PATH_X))
     print('save_Y：{}'.format(settings.MODEL_PATH_Y))
