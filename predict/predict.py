@@ -10,6 +10,7 @@ def predict(race):
     today_data, today_data_horse = today_race(race_json)
     print(today_data)
     print(today_data_horse)
+    latest_races(race_json)
     #pprint.pprint(race_json['course_distance'], width=60)
 
 
@@ -44,6 +45,13 @@ def today_race(race_json):
     #today_data_horse.append(jockey)
     #today_data_horse.append(trainer)
     return today_data, today_data_horse
+
+def latest_races(race_json):
+    race_data = race_json.copy()
+    i = 0
+    #print(len(race_data['horses'][i]['latest_races']))
+    race_data['horses'][i]['latest_races'].sort(key=lambda x: x['date'], reverse=True) # 日付降順
+    pprint.pprint(race_data['horses'][i]['latest_races'][0]['date'],  width=60)
 
 
 def main():
