@@ -172,7 +172,7 @@ def make_race_data(df, date, birth, horse_cnt, l=10):
             except:
                 df_.loc[idx, 'corner_order_3'] = 0
 
-            # 　競馬場
+            #  競馬場
             df_.loc[idx, 'racecourse_urawa'] = 1 if row['競馬場'] == "浦和" else 0
             df_.loc[idx, 'racecourse_funabashi'] = 1 if row['競馬場'] == "船橋" else 0
             df_.loc[idx, 'racecourse_kawasaki'] = 1 if row['競馬場'] == "川崎" else 0
