@@ -1,5 +1,6 @@
 import json
 import pprint
+import datetime
 import numpy as np
 import pandas as pd
 from collections import OrderedDict
@@ -142,9 +143,15 @@ def latest_races(race_json, today_data, today_data_horse):
             birthDate = today - birth_day
 
             place = race_data['horses'][h]['latest_races'][i-1]['place']
-            print(place)
+            result_rank = race_data['horses'][h]['latest_races'][i-1]['horses'][n]['res_rank']
+            m_s_f = datetime.timedelta(seconds=race_data['horses'][h]['latest_races'][i-1]['horses'][n]['res_time'])
+            threeF = race_data['horses'][h]['latest_races'][i-1]['horses'][n]['res_tf_time']
+            corner_order_1 =  race_data['horses'][h]['latest_races'][i-1]['horses'][n]['res_corner_indexes'][0]
+            corner_order_2 =  race_data['horses'][h]['latest_races'][i-1]['horses'][n]['res_corner_indexes'][1]
+            corner_order_3 =  race_data['horses'][h]['latest_races'][i-1]['horses'][n]['res_corner_indexes'][2]
+            print(corner_order_3)
 
-
+            # 馬場状態
             if course_status == '良':
                 df_.loc[i, 'soil_condition'] = float(0)
             elif course_status == '稍':
@@ -156,6 +163,7 @@ def latest_races(race_json, today_data, today_data_horse):
             else:
                 df_.loc[i, 'soil_condition'] = float(0.5)
 
+            # コース種別
             if course_type == 'ダ':
                 df_.loc[i, 'course_type'] = float(0)
             elif course_type == '芝':
@@ -171,6 +179,7 @@ def latest_races(race_json, today_data, today_data_horse):
             df_.loc[i, 'weight'] = inZeroOne((float(weight) - 300) / 300)
             df_.loc[i, 'birth_days'] = inZeroOne((birthDate.days - 700) / 1000)
 
+            # 　競馬場
             df_.loc[i, 'racecourse_urawa'] = 1 if place == "浦和" else 0
             df_.loc[i, 'racecourse_funabashi'] = 1 if place == "船橋" else 0
             df_.loc[i, 'racecourse_kawasaki'] = 1 if place == "川崎" else 0
@@ -187,6 +196,36 @@ def latest_races(race_json, today_data, today_data_horse):
             df_.loc[i, 'racecourse_fukushima'] = 1 if place == "福島" else 0
             df_.loc[i, 'racecourse_morioka'] = 1 if place == "盛岡" else 0 # 左周り
 
+            df_.loc[i, 'result_rank'] = float(result_rank) / 18
+            # 上3F（3ハロン）
+            try:
+                df_.loc[i, 'threeF'] = inZeroOne((float(threeF) - 30) / 30)
+            except ValueError:
+                df_.loc[idx, 'threeF'] = 0
+
+            # タイム(秒)
+            try:
+                time = datetime.datetime.strptime(str(m_s_f), '%H:%M:%S.%f')
+                df_.loc[idx, 'sec'] = inZeroOne(
+                    (float(time.minute * 60 + time.second + time.microsecond / 1000000) - 40) / 250)
+            except:
+                time = dt.strptime(str(m_s_f), '%H:%M:%S')
+                df_.loc[i, 'sec'] = inZeroOne(
+                    (float(time.minute * 60 + time.second + time.microsecond / 1000000) - 40) / 250)
+
+            # コーナー通過順
+            try:
+                df_.loc[i, 'corner_order_1'] = float(corner_order_1) / 18
+            except:
+                df_.loc[i, 'corner_order_1'] = 0
+            try:
+                df_.loc[i, 'corner_order_2'] = float(corner_order_1) / 18
+            except:
+                df_.loc[i, 'corner_order_2'] = 0
+            try:
+                df_.loc[i, 'corner_order_3'] = float(corner_order_3) / 18
+            except:
+                df_.loc[i, 'corner_order_3'] = 0
 
         except:
             traceback.print_exc()
