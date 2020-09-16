@@ -227,8 +227,19 @@ def latest_races(race_json, today_data, today_data_horse):
         while len(df_) < 10:
             df_.loc[len(df_) + len(dropList)] = 0
 
+        df_=df_.replace([np.inf, -np.inf], np.nan)
+        df_  = missing_value_check(df_)
         pd.set_option('display.max_columns', 100)
         #print(df_.head(15))
+
+
+def missing_value_check(df):
+    miss_num = df.isnull().values.sum()
+    if miss_num != 0:
+        print('missing_value：{}'.format(miss_num))
+        #print(df)
+        df = df.fillna(0) # Nanの値を0に置換
+    return df
 
 def inZeroOne(num):
     if num > 1:
