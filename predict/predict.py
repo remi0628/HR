@@ -57,6 +57,7 @@ def latest_races(race_json, today_data, today_data_horse):
     #print(len(race_data['horses'][i]['latest_races']))
     horse_num = today_data_horse[0]
     for h in range(horse_num):
+        race_horse = []
         race_data['horses'][h]['latest_races'].sort(key=lambda x: x['date'], reverse=True) # 日付降順
 
         df_ = pd.DataFrame(np.zeros((1, 30)), columns=["course_type", "R", "len", "soil_condition", "horse_cnt", "horse_number", "result_rank",
@@ -232,6 +233,7 @@ def latest_races(race_json, today_data, today_data_horse):
         pd.set_option('display.max_columns', 100)
         #print(df_.head(15))
 
+        race_horse.append(df_[:10].values)
 
 def missing_value_check(df):
     miss_num = df.isnull().values.sum()
