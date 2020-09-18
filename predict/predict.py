@@ -21,8 +21,8 @@ def predict(race):
     x_list.append(race_horse)
     X = np.array(x_list)
     X = X.astype("float")
-    #model_save_predict(X)
-    model_load_predict()
+    model_save_predict(X)
+    #model_load_predict()
     #print(X)
 
 # 当日データ
@@ -253,8 +253,13 @@ def model_save_predict(X):
     import tensorflow as tf
     X = X
     model = tf.keras.models.load_model("model/model.h5", compile=False)
-    ys = model.predict(X)
-    np.save("PredictData/predict.npy",ys)
+    score = list(model.predict(X)[0])
+    #np.save("PredictData/predict.npy",ys)
+    pd.options.display.float_format = '{:.8f}'.format # 指数表記から少数表記に
+    result = pd.DataFrame([], columns=['num','score'])
+    result['score'] = score
+    result['num'] = list(range(1,19))
+    print(result.sort_values(by='score', ascending=False))
 
 # モデル呼び出し
 def model_load_predict():
