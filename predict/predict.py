@@ -20,7 +20,10 @@ def predict(race):
     #pprint.pprint(race_json['course_distance'], width=60)
     x_list.append(race_horse)
     X = np.array(x_list)
-    print(X)
+    X = X.astype("float")
+    #model_save_predict(X)
+    model_load_predict()
+    #print(X)
 
 # 当日データ
 def today_race(race_json):
@@ -243,6 +246,20 @@ def latest_races(race_json, today_data, today_data_horse):
         else:
             race_horse.append(np.zeros((10, 30)))
     return race_horse
+
+
+# 予測
+def model_save_predict(X):
+    import tensorflow as tf
+    X = X
+    model = tf.keras.models.load_model("model/model.h5", compile=False)
+    ys = model.predict(X)
+    np.save("PredictData/predict.npy",ys)
+
+# モデル呼び出し
+def model_load_predict():
+    pre = np.load("PredictData/predict.npy")
+    print(pre)
 
 def missing_value_check(df):
     miss_num = df.isnull().values.sum()
