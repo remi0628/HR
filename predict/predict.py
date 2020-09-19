@@ -256,9 +256,9 @@ def model_save_predict(X):
     score = list(model.predict(X)[0])
     #np.save("PredictData/predict.npy",ys)
     pd.options.display.float_format = '{:.8f}'.format # 指数表記から少数表記に
-    result = pd.DataFrame([], columns=['score', 'num'])
+    result = pd.DataFrame([], columns=['score', 'number'])
     result['score'] = score
-    result['num'] = list(range(1,19))
+    result['number'] = list(range(1,19))
     result = result.sort_values(by='score', ascending=False)
     score_list = result.to_dict(orient='records')
     pprint.pprint(score_list)
