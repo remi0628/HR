@@ -256,10 +256,12 @@ def model_save_predict(X):
     score = list(model.predict(X)[0])
     #np.save("PredictData/predict.npy",ys)
     pd.options.display.float_format = '{:.8f}'.format # 指数表記から少数表記に
-    result = pd.DataFrame([], columns=['num','score'])
+    result = pd.DataFrame([], columns=['score', 'num'])
     result['score'] = score
     result['num'] = list(range(1,19))
-    print(result.sort_values(by='score', ascending=False))
+    result = result.sort_values(by='score', ascending=False)
+    score_list = result.to_dict(orient='records')
+    pprint.pprint(score_list)
 
 # モデル呼び出し
 def model_load_predict():
