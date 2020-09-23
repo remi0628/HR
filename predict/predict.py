@@ -4,6 +4,7 @@ import datetime
 import traceback
 import numpy as np
 import pandas as pd
+import tensorflow as tf
 from collections import OrderedDict
 from datetime import datetime as dt
 
@@ -14,16 +15,15 @@ def predict(race):
         race_json = json.load(f)
     x_list = []
     today_data, today_data_horse = today_race(race_json)
-    print(today_data)
-    print(today_data_horse)
     race_horse = latest_races(race_json, today_data, today_data_horse)
     #pprint.pprint(race_json['course_distance'], width=60)
     x_list.append(race_horse)
     X = np.array(x_list)
     X = X.astype("float")
-    model_save_predict(X)
+    prediction_result = model_save_predict(X)
     #model_load_predict()
     #print(X)
+    return prediction_result # 予測結果が入っている
 
 # 当日データ
 def today_race(race_json):
@@ -250,18 +250,18 @@ def latest_races(race_json, today_data, today_data_horse):
 
 # 予測
 def model_save_predict(X):
-    import tensorflow as tf
     X = X
     model = tf.keras.models.load_model("model/model.h5", compile=False)
     score = list(model.predict(X)[0])
-    #np.save("PredictData/predict.npy",ys)
+    #np.save("PredictData/predict.npy",ys) # 予測した結果の保存
     pd.options.display.float_format = '{:.8f}'.format # 指数表記から少数表記に
     result = pd.DataFrame([], columns=['score', 'number'])
     result['score'] = score
     result['number'] = list(range(1,19))
     result = result.sort_values(by='score', ascending=False)
     score_list = result.to_dict(orient='records')
-    pprint.pprint(score_list)
+    #pprint.pprint(score_list)
+    return score_list
 
 # モデル呼び出し
 def model_load_predict():
@@ -286,7 +286,8 @@ def inZeroOne(num):
 
 
 def main():
-    predict(JSON_RACE)
+    result = predict(JSON_RACE)
+    print(result)
 
 
 if __name__ == '__main__':
