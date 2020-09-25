@@ -11,7 +11,7 @@ from concurrent import futures
 import sys
 sys.path.append('../')
 import settings
-SAVE_FILE_PATH = settings.SAVE_FILE_PATH # 本番時は数字を取る
+SAVE_FILE_PATH = settings.SAVE_FILE_PATH2 # 本番時は数字を取る
 
 omit_lower_race, omit_date_race, none_race, race_processed = 0, 0, 0, 0
 
@@ -73,9 +73,10 @@ def make_npy():
 
     X = np.array(X)
     Y = np.array(Y)
+    print(Y)
     X = X.astype("float")
-    np.save(f"{settings.MODEL_PATH_X}", X)
-    np.save(f"{settings.MODEL_PATH_Y}", Y)
+    #np.save(f"{settings.MODEL_PATH_X}", X)
+    #np.save(f"{settings.MODEL_PATH_Y}", Y)
 
 
 def inZeroOne(num):

@@ -50,7 +50,7 @@ def Layers(data, mode, filters, kernel=None, bn=True, activation="relu", drop=No
 
 
 dropouts = 0.6
-inputs = Input(shape=(18, 10, 16))
+inputs = Input(shape=(18, 10, 30))
 x = Layers(inputs, "conv", 256, kernel=(1, 1), drop=dropouts)
 x = Layers(x, "conv", 256, kernel=(1, 1), drop=dropouts)
 x = Layers(x, "conv", 256, kernel=(1, 1), drop=dropouts)
@@ -77,7 +77,7 @@ call_back = tf.keras.callbacks.EarlyStopping(monitor="val_accuracy",
                                            patience=500,
                                            restore_best_weights=True)
 
-epoch = 500
+epoch = 100
 batch = 8
 history = model.fit(x_train, y_train, batch_size=batch, epochs=epoch, validation_data=(x_test, y_test),
                     callbacks=[call_back])

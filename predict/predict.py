@@ -273,7 +273,7 @@ def missing_value_check(df):
     if miss_num != 0:
         print('missing_value：{}'.format(miss_num))
         #print(df)
-        df = df.fillna(0) # Nanの値を0に置換
+        df = df.fillna(0)
     return df
 
 def inZeroOne(num):
