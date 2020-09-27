@@ -6,6 +6,7 @@ import pandas as pd
 import datetime as dt
 from sqlalchemy import *
 from sqlalchemy import create_engine
+from concurrent import futures
 import inspect
 import sys
 sys.path.append('../')
@@ -243,7 +244,7 @@ def create_csv_data():
     file_init()
     max_race_id = last_record(engine) # 最大race_id
     #max_race_id = 10
-    min_race_id = 1
+    min_race_id = 33604
     now = time.time()
     for race_id in range(min_race_id , int(max_race_id)+1):
         create_data_race_id(engine, race_id)
