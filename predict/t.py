@@ -7,7 +7,7 @@ import pandas as pd
 from collections import OrderedDict
 from datetime import datetime as dt
 
-JSON_RACE = './sample.json'
+JSON_RACE = './sample1.json'
 
 def predict(race):
     with open(race, encoding="utf-8_sig") as f:
@@ -15,7 +15,7 @@ def predict(race):
     today_data, today_data_horse = today_race(race_json)
     print(today_data)
     print(today_data_horse)
-    latest_races(race_json, today_data, today_data_horse)
+    #latest_races(race_json, today_data, today_data_horse)
     #pprint.pprint(race_json['course_distance'], width=60)
 
 
@@ -154,8 +154,12 @@ def latest_races(race_json, today_data, today_data_horse):
                 df_.loc[i, 'horse_cnt'] = float(horse_cnt)
                 df_.loc[i, 'horse_number'] = float(number)
                 df_.loc[i, 'borden_weight'] = float(handicap)
-                df_.loc[i, 'weight'] = float(weight)
                 df_.loc[i, 'birth_days'] = birthDate.days
+                # 当日データはNoneがある
+                try:
+                    df_.loc[i, 'weight'] = 0
+                except:
+                    df_.loc[i, 'weight'] = float(weight)
 
                 # 　競馬場
                 df_.loc[i, 'racecourse_urawa'] = 1 if place == "浦和" else 0
@@ -226,7 +230,7 @@ def latest_races(race_json, today_data, today_data_horse):
             df_.loc[len(df_) + len(dropList)] = 0
 
         pd.set_option('display.max_columns', 100)
-        print(df_.head(15))
+        #print(df_.head(15))
 
 def inZeroOne(num):
     if num > 1:

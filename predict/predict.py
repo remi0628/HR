@@ -163,8 +163,12 @@ def latest_races(race_json, today_data, today_data_horse):
                     df_.loc[i, 'horse_cnt'] = float(horse_cnt) / 18
                     df_.loc[i, 'horse_number'] = float(number) / 18
                     df_.loc[i, 'borden_weight'] = inZeroOne((float(handicap) - 40) / 30)
-                    df_.loc[i, 'weight'] = inZeroOne((float(weight) - 300) / 300)
                     df_.loc[i, 'birth_days'] = inZeroOne((birthDate.days - 700) / 1000)
+                    # 当日データはNoneがある
+                    try:
+                        df_.loc[i, 'weight'] = 0
+                    except:
+                        df_.loc[i, 'weight'] = inZeroOne((float(weight) - 300) / 300)
 
                     # 　競馬場
                     df_.loc[i, 'racecourse_urawa'] = 1 if place == "浦和" else 0
@@ -260,7 +264,7 @@ def model_save_predict(X):
     result['number'] = list(range(1,19))
     result = result.sort_values(by='score', ascending=False)
     score_list = result.to_dict(orient='records')
-    #pprint.pprint(score_list)
+    pprint.pprint(score_list)
     return score_list
 
 # モデル呼び出し
