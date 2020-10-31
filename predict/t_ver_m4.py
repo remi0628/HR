@@ -140,7 +140,7 @@ def latest_races(race_json, today_data, today_data_horse):
                 df_.loc[i, 'money'] = 0
                 df_.loc[i, 'horse_cnt'] = float(horse_cnt)
                 df_.loc[i, 'len'] = (float(course_distance))
-                df_.loc[i, 'popularity'] = float(odds)
+                df_.loc[i, 'popularity'] = 0
                 df_.loc[i, 'borden_weight'] = float(handicap)
                 df_.loc[i, 'diff_accident'] = 0
                 df_.loc[i, 'birth_days'] = birthDate.days
