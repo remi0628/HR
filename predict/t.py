@@ -7,7 +7,7 @@ import pandas as pd
 from collections import OrderedDict
 from datetime import datetime as dt
 
-JSON_RACE = './sample1.json'
+JSON_RACE = './55879.json'
 
 def predict(race):
     with open(race, encoding="utf-8_sig") as f:
@@ -15,7 +15,7 @@ def predict(race):
     today_data, today_data_horse = today_race(race_json)
     print(today_data)
     print(today_data_horse)
-    #latest_races(race_json, today_data, today_data_horse)
+    latest_races(race_json, today_data, today_data_horse)
     #pprint.pprint(race_json['course_distance'], width=60)
 
 
@@ -230,7 +230,7 @@ def latest_races(race_json, today_data, today_data_horse):
             df_.loc[len(df_) + len(dropList)] = 0
 
         pd.set_option('display.max_columns', 100)
-        #print(df_.head(15))
+        print(df_.head(15))
 
 def inZeroOne(num):
     if num > 1:

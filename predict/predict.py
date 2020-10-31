@@ -1,9 +1,11 @@
+import os
 import json
 import pprint
 import datetime
 import traceback
 import numpy as np
 import pandas as pd
+from glob import glob
 import tensorflow as tf
 from collections import OrderedDict
 from datetime import datetime as dt
@@ -230,7 +232,8 @@ def latest_races(race_json, today_data, today_data_horse):
                             df_.loc[i, 'corner_order_3'] = 0
 
                 except: # エラーなら全部0
-                    traceback.print_exc()
+                    # エラー表示
+                    #traceback.print_exc()
                     dropList.append(i)
                     df_.loc[i] = 0
 
@@ -289,9 +292,33 @@ def inZeroOne(num):
         return num
 
 
-def main():
+
+
+### 予想するタイプ ###
+# 複数のjsonファイルを予測 ./race_file/にjsonファイルを入れる
+def all_read():
+    for file in glob("./race_file/*"):
+        print('---------------------------------------------------------------------')
+        result = predict(file)
+        name = os.path.split(file)[1]
+        json_name = "./predict_result/predict_{}.json".format(name[:-5])
+        with open(json_name, 'w') as f:
+            json.dump(result, f, indent=2)
+        print("end predict. save json file ----> " + json_name)
+
+# 一つのファイルを予測 カレントファイルにsample.jsonファイル設置
+def single_read():
     result = predict(JSON_RACE)
-    print(result)
+    #print(result)
+    json_name = "./predict_result/predict_{}.json".format(JSON_RACE[2:7])
+    with open(json_name, 'w') as f:
+        json.dump(result, f, indent=2)
+    print("end predict. save json file ----> " + json_name)
+
+
+def main():
+    all_read()
+    #single_read()
 
 
 if __name__ == '__main__':
