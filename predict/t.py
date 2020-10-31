@@ -157,9 +157,9 @@ def latest_races(race_json, today_data, today_data_horse):
                 df_.loc[i, 'birth_days'] = birthDate.days
                 # 当日データはNoneがある
                 try:
-                    df_.loc[i, 'weight'] = 0
-                except:
                     df_.loc[i, 'weight'] = float(weight)
+                except:
+                    df_.loc[i, 'weight'] = 0
 
                 # 　競馬場
                 df_.loc[i, 'racecourse_urawa'] = 1 if place == "浦和" else 0
