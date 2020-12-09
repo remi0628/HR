@@ -1,4 +1,4 @@
-# Horse Racing AI
+# Horse Racing Prediction AI
 * 地方競馬含め全競馬場データを扱って学習させたAI 　正答率：約22%  
 
 ## Data
